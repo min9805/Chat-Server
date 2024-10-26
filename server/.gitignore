@@ -1,9 +1,7 @@
-server/src/main/resources/application.properties
-
 HELP.md
-server/.gradle
-server/build/
-!server/gradle/wrapper/gradle-wrapper.jar
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
