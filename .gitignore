@@ -37,3 +37,4 @@ out/
 
 ### VS Code ###
 .vscode/
+server/src/main/java/resources/application.yml
