@@ -5,10 +5,15 @@
   "manifest_version": 3,
   "minimum_chrome_version": "116",
   "action": {
+    "default_popup": "popup.html",
     "default_icon": "icons/socket-inactive.png"
   },
+  "permissions": ["activeTab"],
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"
+  },
+    "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }

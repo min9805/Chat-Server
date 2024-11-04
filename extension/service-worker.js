@@ -1,14 +1,10 @@
 const TEN_SECONDS_MS = 10 * 1000;
-let webSocket = null;
+let stompClient = null;
+let socket = null;
 
-// Make sure the Glitch demo server is running
-fetch('https://chrome-extension-websockets.glitch.me/', { mode: 'no-cors' });
-
-// Toggle WebSocket connection on action button click
-// Send a message every 10 seconds, the ServiceWorker will
-// be kept alive as long as messages are being sent.
 chrome.action.onClicked.addListener(async () => {
-  if (webSocket) {
+  console.log('chrome.action.onClicked');
+  if (stompClient) {
     disconnect();
   } else {
     connect();
@@ -17,41 +13,47 @@ chrome.action.onClicked.addListener(async () => {
 });
 
 function connect() {
-  webSocket = new WebSocket('wss://chrome-extension-websockets.glitch.me/ws');
+  console.log('Connecting to WebSocket... by service worker');
+  socket = new WebSocket('ws://localhost:8080/ws/chat');
+  stompClient = Stomp.over(socket);
 
-  webSocket.onopen = () => {
+  stompClient.connect({}, function (frame) {
     chrome.action.setIcon({ path: 'icons/socket-active.png' });
-  };
+    console.log('STOMP connection established');
 
-  webSocket.onmessage = (event) => {
-    console.log(event.data);
-  };
+    // 채팅방 구독
+    stompClient.subscribe('/topic/chat', function (message) {
+      console.log(JSON.parse(message.body));
+    });
+  });
 
-  webSocket.onclose = () => {
+  socket.onclose = () => {
     chrome.action.setIcon({ path: 'icons/socket-inactive.png' });
     console.log('websocket connection closed');
-    webSocket = null;
+    stompClient = null;
+    socket = null;
   };
 }
 
 function disconnect() {
-  if (webSocket) {
-    webSocket.close();
+  if (stompClient) {
+    stompClient.disconnect();
+  }
+  if (socket) {
+    socket.close();
   }
 }
 
 function keepAlive() {
   const keepAliveIntervalId = setInterval(
     () => {
-      if (webSocket) {
+      if (stompClient && stompClient.connected) {
         console.log('ping');
-        webSocket.send('ping');
+        stompClient.send('/app/chat.ping', {}, JSON.stringify({ type: 'PING' }));
       } else {
         clearInterval(keepAliveIntervalId);
       }
     },
-    // It's important to pick an interval that's shorter than 30s, to
-    // avoid that the service worker becomes inactive.
     TEN_SECONDS_MS
   );
 }
