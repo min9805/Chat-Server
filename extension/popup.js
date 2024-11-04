@@ -1,6 +1,30 @@
 let stompClient = null;
 const base62Encoder = new Base62Encoder();
 
+// 랜덤 닉네임 생성 함수
+function generateNickname() {
+    const adjectives = [
+        '행복한', '즐거운', '신나는', '귀여운', '멋진',
+        '똑똑한', '현명한', '친절한', '활기찬', '열정적인',
+        '다정한', '유쾌한', '상냥한', '재미있는', '사랑스러운'
+    ];
+
+    const nouns = [
+        '곰돌이', '토끼', '강아지', '고양이', '판다',
+        '코알라', '펭귄', '다람쥐', '여우', '사자',
+        '호랑이', '기린', '코끼리', '햄스터', '돌고래'
+    ];
+
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+
+    return `${randomAdjective}${randomNoun}`;
+}
+
+// 닉네임을 저장할 변수
+const nickname = generateNickname();
+console.log('Generated nickname:', nickname);
+
 function connect() {
     console.log('Connecting to WebSocket...');
     const socket = new WebSocket('ws://localhost:8080/ws/chat');
@@ -9,13 +33,11 @@ function connect() {
     stompClient.connect({}, async function (frame) {
         console.log('Connected: ' + frame);
 
-        // 현재 탭의 URL을 가져와서 topic 생성
         try {
             const currentTab = await getCurrentTab();
             const topic = base62Encoder.sanitizeUrl(currentTab.url);
             console.log('Subscribing to topic:', topic);
 
-            // topic별 채팅방 구독
             stompClient.subscribe(`/sub/${topic}`, function (message) {
                 displayMessage(JSON.parse(message.body));
             });
@@ -51,7 +73,7 @@ async function sendMessage(content) {
 
             const chatMessage = {
                 message: content,
-                sender: '행복한띠용이',
+                sender: nickname,  // 생성된 닉네임 사용
                 url: currentTab.url
             };
 
